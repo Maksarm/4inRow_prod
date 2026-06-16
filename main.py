@@ -257,5 +257,10 @@ def handle_local_reset_game(data):
     }, to=request.sid)
 
 
+PRODUCTION = 1
+
+host = '0.0.0.0'
+if PRODUCTION == 0:
+    host = '127.0.0.1'
 if __name__ == '__main__':
     socketio.run(app, host='127.0.0.1', debug=True, port=5000, allow_unsafe_werkzeug=True, use_reloader=False)
