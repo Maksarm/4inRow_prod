@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>4 в ряд</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+</head>
+<body>
+    <div class="main-container">
+        <div id="lobbyScreen" class="screen active">
+            <div class="hero-card">
+                <div class="game-title">
+                    <h1>4 В РЯД</h1>
+                </div>
+
+                <div class="room-section">
+                    <div class="section-label">
+                        <span>КОД КОМНАТЫ</span>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" class="code-input" id="roomCodeInput" placeholder="XXXX" maxlength="4" autocomplete="off" inputmode="numeric">
+                    </div>
+                    <div class="info-text">
+                        Введите 4-значный код для входа в комнату
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-secondary btn-block" id="createRoomBtn">
+                        ОНЛАЙН ИГРА
+                    </button>
+
+                    <!-- ЛОКАЛЬНАЯ ИГРА -->
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #2a2a40;">
+                        <button class="btn btn-outline btn-block" id="localGameBtn">
+                            ЛОКАЛЬНАЯ ИГРА
+                        </button>
+                        <div class="setting-row" style="margin-bottom: 0.75rem; margin-top: 0.75rem;">
+                            <select class="setting-select" id="localBoardSize" style="width: 100%;">
+                                <option value="6">6×7 (классика)</option>
+                                <option value="5">5×6</option>
+                                <option value="7">7×8</option>
+                                <option value="8">8×9</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="createScreen" class="screen">
+            <div class="hero-card">
+                <button class="back-btn" id="createBackBtn">← Назад</button>
+
+                <div class="game-title">
+                    <h1>СОЗДАНИЕ КОМНАТЫ</h1>
+                </div>
+
+                <div class="room-code-section">
+                    <div class="room-code-label">КОД КОМНАТЫ, скажите его другу или отправьте приглашение, чтобы начать игру</div>
+                    <div class="room-code-display">
+                        <span id="roomCode">----</span>
+                    </div>
+                    <button class="btn-copy" id="copyCodeBtn">КОПИРОВАТЬ ССЫЛКУ-ПРИГЛАШЕНИЕ</button>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-title">НАСТРОЙКИ ИГРЫ</div>
+                    <div class="setting-row">
+                        <label class="setting-label">Размер поля</label>
+                        <select class="setting-select" id="boardSize">
+                            <option value="6">6×7 (классика)</option>
+                            <option value="5">5×6</option>
+                            <option value="7">7×8</option>
+                            <option value="8">8×9</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="waiting-section">
+                    <div class="spinner"></div>
+                    <div class="waiting-text">Ожидание подключения второго игрока...</div>
+                    <div class="waiting-hint">Как только друг войдёт — игра начнётся автоматически</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="gameScreen" class="screen">
+            <div class="hero-card">
+                <button class="back-btn" id="gameExitBtn">← Выйти</button>
+
+                <div class="game-title">
+                    <h1>4 В РЯД</h1>
+                    <p>Комната: <span id="gameRoomCode">---</span></p>
+                </div>
+
+                <div class="turn-info">
+                    <div class="turn-indicator" id="turnIndicator">
+                        <span class="turn-text">Ожидание...</span>
+                    </div>
+                </div>
+
+                <div class="game-board-container">
+                    <div class="game-board" id="gameBoard"></div>
+                </div>
+
+                <div class="skin-selector" style="margin-top: 1.5rem; text-align: center;">
+                    <div id="skinOptions" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;"></div>
+                </div>
+
+                <div id="winnerOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center;">
+                    <div style="background: rgba(20, 20, 35, 0.95); backdrop-filter: blur(12px); border-radius: 2rem; padding: 2rem; text-align: center; border: 1px solid rgba(66, 133, 244, 0.3); min-width: 280px;">
+                        <div id="winnerText" style="font-size: 2rem; font-weight: bold; margin-bottom: 1.5rem;"></div>
+                        <button id="rematchBtn" class="btn" style="background: #4285f4; color: white; border: none; border-radius: 2rem; padding: 0.85rem 2rem; font-size: 1.2rem; cursor: pointer;">РЕВАНШ</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="localGameScreen" class="screen">
+            <div class="hero-card">
+                <button class="back-btn" id="localBackBtn">← Назад</button>
+
+                <div class="game-title">
+                    <h1>ЛОКАЛЬНАЯ ИГРА</h1>
+                </div>
+
+                <div class="turn-info">
+                    <div class="turn-indicator" id="localTurnIndicator">
+                        <span class="turn-text">Ожидание...</span>
+                    </div>
+                </div>
+
+                <div class="game-board-container">
+                    <div class="game-board" id="localGameBoard"></div>
+                </div>
+
+                <div class="skin-selector" style="margin-top: 1.5rem; text-align: center;">
+                    <div style="margin-bottom: 1rem;">
+                        <div style="color: #db4437; margin-bottom: 8px; font-size: 0.7rem; font-weight: bold;">КРАСНЫЕ ФИШКИ</div>
+                        <div id="localRedSkins" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;"></div>
+                    </div>
+                    <div>
+                        <div style="color: #4285f4; margin-bottom: 8px; font-size: 0.7rem; font-weight: bold;">СИНИЕ ФИШКИ</div>
+                        <div id="localBlueSkins" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;"></div>
+                    </div>
+                </div>
+
+                <div id="localWinnerOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center;">
+                    <div style="background: rgba(20, 20, 35, 0.95); backdrop-filter: blur(12px); border-radius: 2rem; padding: 2rem; text-align: center; border: 1px solid rgba(66, 133, 244, 0.3); min-width: 280px;">
+                        <div id="localWinnerText" style="font-size: 2rem; font-weight: bold; margin-bottom: 1.5rem;"></div>
+                        <button id="localRematchBtn" class="btn" style="background: #4285f4; color: white; border: none; border-radius: 2rem; padding: 0.85rem 2rem; font-size: 1.2rem; cursor: pointer;">РЕВАНШ</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button id="helpBtn" style="position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; background: #4285f4; color: white; border: none; cursor: pointer; font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1001; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+            ?
+        </button>
+
+    </div>
+</body>
+</html>
